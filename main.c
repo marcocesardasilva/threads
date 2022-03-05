@@ -4,23 +4,30 @@
 #include <unistd.h>
 #define NUM_TENANT_THREADS 5 
 
-int avalilable_list_pop() {
-  int max_random_number = 8999;
-  int min_random_number = 1000;
-  int random_number = rand() % max_random_number + min_random_number;
-  return random_number;
-}
+struct property
+{
+  int code;
+  char address[50];
+  float price;
+  char neighborhood[50];
+};
 
-void delivered_list_push(int property_code) {}
+struct property properties[7];
+
+properties[0].code = 3232;
+properties[0].address[0] = 'a';
+properties[0].price = 3232;
+properties[0].neighborhood[0] = 'b';
 
 int rent_property() {
-  int property_code = avalilable_list_pop();
+  int property_code = 2323;
+  // int property_code = avalilable_list.pop();
   printf("alugando imóvel %d\n", property_code);
   return property_code;
 }
 
 void return_property(int property_code) {
-  delivered_list_push(property_code);
+  // delivered_list.push(property_code);
   printf("devolvendo imóvel %d\n", property_code);
 }
 
