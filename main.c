@@ -112,19 +112,19 @@ void rent_property() {
 
 void return_property() {
   sleep(1);
-  int l;
-  for(l = 0; l < 10; l ++)
-  {
+  while(1){
+    for(int l = 0; l < 10; l ++)
+    {
+      pthread_mutex_lock(&mutex);
       if(imovelEntregue[l].codigo != -1)
       {
           Imovel propriedade;
-          pthread_mutex_lock(&mutex);
-          propriedade.codigo = imovelDisponivel[l].codigo;
-          strcpy(propriedade.endereco, imovelDisponivel[l].endereco);
-          propriedade.preco = imovelDisponivel[l].preco;
-          imovelEntregue[l].codigo = propriedade.codigo;
-          strcpy(imovelEntregue[l].endereco, propriedade.endereco);
-          imovelEntregue[l].preco = propriedade.preco;
+          propriedade.codigo = imovelEntregue[l].codigo;
+          strcpy(propriedade.endereco, imovelEntregue[l].endereco);
+          propriedade.preco = imovelEntregue[l].preco;
+          imovelEntregue[l].codigo = -1;
+          strcpy(imovelEntregue[l].endereco, "");
+          imovelEntregue[l].preco = -1.00;
           for(int y = 0; y < 10; y++)
           {
               if(imovelDisponivel[y].codigo == -1)
@@ -139,6 +139,7 @@ void return_property() {
           pthread_mutex_unlock(&mutex);
           break;
       }
+    }
   }
 }
 
@@ -180,7 +181,6 @@ int main() {
     for(int t=0; t<NUM_TENANT_THREADS; t++){
         pthread_join(tenant_threads[t], NULL);
     }
-
     for(int t=0; t<NUM_BROKER_THREADS; t++){
         pthread_join(corretor_threads[t], NULL);
     }
