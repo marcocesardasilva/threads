@@ -78,9 +78,9 @@ void CadastraImoveisDisponiveis()
     int r;
     for(r = 10; r < 20; r++)
     {
-        imovelEntregue[r].codigo = -1;
-        strcpy(imovelEntregue[r].endereco, " ");
-        imovelEntregue[r].preco = -1.00;
+        imovelDisponivel[r].codigo = -1;
+        strcpy(imovelDisponivel[r].endereco, " ");
+        imovelDisponivel[r].preco = -1.00;
         strcpy(imovelDisponivel[r].bairro, " ");
     }
 }
