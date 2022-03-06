@@ -20,7 +20,7 @@ Imovel imovelEntregue[10];
 
 pthread_mutex_t mutex;
 
-void CadastraImoveisDisponivels()
+void CadastraImoveisDisponiveis()
 {
     imovelDisponivel[0].codigo = 1;
     strcpy(imovelDisponivel[0].endereco, "Avenida Beira Mar, 100");
@@ -63,7 +63,7 @@ void CadastraImoveisDisponivels()
     imovelDisponivel[9].preco = 2800.00;
 }
 
-int avalilable_list_pop() {
+int get_random_number() {
   int max_random_number = 10;
   int random_number = rand() % max_random_number;
   return random_number;
@@ -72,7 +72,7 @@ int avalilable_list_pop() {
 void rent_property() {
   while(1)
   {
-      int identificador = avalilable_list_pop();
+      int identificador = get_random_number();
       pthread_mutex_lock(&mutex);
       if(imovelDisponivel[identificador].codigo != -1)
       {
@@ -86,7 +86,7 @@ void rent_property() {
           imovelDisponivel[identificador].preco = -1.00;
           printf("alugando imóvel %d, localizado em %s, no valor de %.2f\n", propriedade.codigo, propriedade.endereco, propriedade.preco);
 
-          sleep(avalilable_list_pop());
+          sleep(get_random_number());
 
           int i;
           for(i = 0; i < 10; i++)
@@ -106,7 +106,7 @@ void rent_property() {
 }
 
 void return_property() {
-  sleep(avalilable_list_pop());
+  sleep(1);
   int l;
   for(l = 0; l < 10; l ++)
   {
@@ -151,7 +151,6 @@ void *tenant_thread_function(void *arg) {
 
 int main() {
     int k;
-
     for(k=0; k<10; k++)
     {
         imovelEntregue[k].codigo = -1;
@@ -161,13 +160,13 @@ int main() {
 
     pthread_mutex_init(&mutex, NULL);
 
-    pthread_t threads[NUM_TENANT_THREADS];
+    pthread_t tenant_threads[NUM_TENANT_THREADS];
     pthread_t corretor_threads[NUM_BROKER_THREADS];
     long t;
     for(t=0; t<NUM_TENANT_THREADS; t++){
-        printf("In main: creating thread %ld\n", t);
+        printf("In main: creating tenant thread %ld\n", t);
         int res_thread;
-        res_thread = pthread_create(&threads[t], NULL, tenant_thread_function, NULL);
+        res_thread = pthread_create(&tenant_threads[t], NULL, tenant_thread_function, NULL);
         if (res_thread){
             printf("ERROR; return code from pthread_create() is %d\n", res_thread);
             exit(-1);
@@ -175,7 +174,7 @@ int main() {
     }
     for(t=0; t<NUM_BROKER_THREADS; t++)
     {
-        printf("In main: creating thread %ld\n", t);
+        printf("In main: creating broker thread %ld\n", t);
         int cor_thread;
         cor_thread = pthread_create(&corretor_threads[t], NULL, broker_thread_function, NULL);
         if(cor_thread)
@@ -185,7 +184,7 @@ int main() {
         }
     }
     for(t=0; t<NUM_TENANT_THREADS; t++){
-        pthread_join(threads[t], NULL);
+        pthread_join(tenant_threads[t], NULL);
     }
 
     for(t=0; t<NUM_BROKER_THREADS; t++){
