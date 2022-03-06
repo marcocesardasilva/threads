@@ -72,83 +72,73 @@ void instantiate_delivered_properties(){
     }
 }
 
-int get_random_number() {
-  int max_random_number = 10;
+int get_random_number(int max) {
+  int max_random_number = max;
   int random_number = rand() % max_random_number;
   return random_number;
 }
 
-void rent_property() {
-  while(1)
-  {
-      int identificador = get_random_number();
-      pthread_mutex_lock(&mutex);
-      if(imovelDisponivel[identificador].codigo != -1)
-      {
-          Imovel propriedade;
-          propriedade.codigo = imovelDisponivel[identificador].codigo;
-          strcpy(propriedade.endereco, imovelDisponivel[identificador].endereco);
-          propriedade.preco = imovelDisponivel[identificador].preco;
-          imovelDisponivel[identificador].codigo = -1;
-          strcpy(imovelDisponivel[identificador].endereco, "");
-          imovelDisponivel[identificador].preco = -1.00;
-          printf("alugando imóvel %d, localizado em %s, no valor de %.2f\n", propriedade.codigo, propriedade.endereco, propriedade.preco);
-          sleep(get_random_number());
-          for(int i = 0; i < 10; i++)
-          {
-              if(imovelEntregue[i].codigo == -1)
-              {
-                  imovelEntregue[i].codigo = propriedade.codigo;
-                  strcpy(imovelEntregue[i].endereco, propriedade.endereco);
-                  imovelEntregue[i].preco = propriedade.preco;
-                  break;
-              }
-          }
-          pthread_mutex_unlock(&mutex);
-          break;
-      }
-  }
+int rent_property() {
+    pthread_mutex_lock(&mutex);
+    int index = get_random_number(10);
+    while(imovelDisponivel[index].codigo == -1) {
+      index = get_random_number(10);
+    }
+    Imovel propriedade;
+    propriedade.codigo = imovelDisponivel[index].codigo;
+    strcpy(propriedade.endereco, imovelDisponivel[index].endereco);
+    propriedade.preco = imovelDisponivel[index].preco;
+    imovelDisponivel[index].codigo = -1;
+    strcpy(imovelDisponivel[index].endereco, "");
+    imovelDisponivel[index].preco = -1.00;
+    printf("alugando imóvel %d, localizado em %s, no valor de %.2f\n", propriedade.codigo, propriedade.endereco, propriedade.preco);
+    sleep(get_random_number(10));
+    int delivered_list_index;
+    for(delivered_list_index = 0; delivered_list_index < 10; delivered_list_index++)
+    {
+        if(imovelEntregue[delivered_list_index].codigo == -1)
+        {
+            imovelEntregue[delivered_list_index].codigo = propriedade.codigo;
+            strcpy(imovelEntregue[delivered_list_index].endereco, propriedade.endereco);
+            imovelEntregue[delivered_list_index].preco = propriedade.preco;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&mutex);
+    return delivered_list_index;
 }
 
-void return_property() {
-  sleep(1);
-  while(1){
-    for(int l = 0; l < 10; l ++)
-    {
-      pthread_mutex_lock(&mutex);
-      if(imovelEntregue[l].codigo != -1)
+void return_property(int index) {
+  pthread_mutex_lock(&mutex);
+  Imovel propriedade;
+  propriedade.codigo = imovelEntregue[index].codigo;
+  strcpy(propriedade.endereco, imovelEntregue[index].endereco);
+  propriedade.preco = imovelEntregue[index].preco;
+  imovelEntregue[index].codigo = -1;
+  strcpy(imovelEntregue[index].endereco, "");
+  imovelEntregue[index].preco = -1.00;
+  for(int y = 0; y < 10; y++)
+  {
+      if(imovelDisponivel[y].codigo == -1)
       {
-          Imovel propriedade;
-          propriedade.codigo = imovelEntregue[l].codigo;
-          strcpy(propriedade.endereco, imovelEntregue[l].endereco);
-          propriedade.preco = imovelEntregue[l].preco;
-          imovelEntregue[l].codigo = -1;
-          strcpy(imovelEntregue[l].endereco, "");
-          imovelEntregue[l].preco = -1.00;
-          for(int y = 0; y < 10; y++)
-          {
-              if(imovelDisponivel[y].codigo == -1)
-              {
-                  imovelDisponivel[y].codigo = propriedade.codigo;
-                  strcpy(imovelDisponivel[y].endereco, propriedade.endereco);
-                  imovelDisponivel[y].preco = propriedade.preco;
-                  printf("devolvendo imóvel %d, localizado em %s, no valor de %.2f\n", propriedade.codigo, propriedade.endereco, propriedade.preco);
-                  break;
-              }
-          }
-          pthread_mutex_unlock(&mutex);
+          imovelDisponivel[y].codigo = propriedade.codigo;
+          strcpy(imovelDisponivel[y].endereco, propriedade.endereco);
+          imovelDisponivel[y].preco = propriedade.preco;
+          printf("devolvendo imóvel %d, localizado em %s, no valor de %.2f\n", propriedade.codigo, propriedade.endereco, propriedade.preco);
           break;
       }
-    }
   }
+  pthread_mutex_unlock(&mutex);
 }
 
 void *broker_thread_function(void *arg) {
-  return_property();
+  // return_property();
 }
 
 void *tenant_thread_function(void *arg) {
-  rent_property();
+  int index = rent_property();
+  sleep(get_random_number(5));
+  return_property(index);
 }
 
 int main() {
