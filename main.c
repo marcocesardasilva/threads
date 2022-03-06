@@ -147,13 +147,13 @@ void rent_property()
 }
 
 void return_property() {
-  int l;
-  for(l = 0; l < 20; l ++)
+  int l = 0;
+  while(1)
   {
+      pthread_mutex_lock(&mutex);
       if(imovelEntregue[l].codigo != -1 && imovelEntregue[l].codigo != 0)
       {
           Imovel propriedade;
-          pthread_mutex_lock(&mutex);
 
           propriedade.codigo = imovelEntregue[l].codigo;
           strcpy(propriedade.endereco, imovelEntregue[l].endereco);
@@ -179,6 +179,12 @@ void return_property() {
           }
           pthread_mutex_unlock(&mutex);
           break;
+      }
+      pthread_mutex_unlock(&mutex);
+      l++;
+      if(l > 19)
+      {
+          l = 0;
       }
   }
 }
