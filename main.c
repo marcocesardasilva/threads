@@ -63,6 +63,15 @@ void CadastraImoveisDisponiveis()
     imovelDisponivel[9].preco = 2800.00;
 }
 
+void instantiate_delivered_properties(){
+    for(int k=0; k<10; k++)
+    {
+        imovelEntregue[k].codigo = -1;
+        strcpy(imovelEntregue[k].endereco, "");
+        imovelEntregue[k].preco = -1.00;
+    }
+}
+
 int get_random_number() {
   int max_random_number = 10;
   int random_number = rand() % max_random_number;
@@ -80,16 +89,12 @@ void rent_property() {
           propriedade.codigo = imovelDisponivel[identificador].codigo;
           strcpy(propriedade.endereco, imovelDisponivel[identificador].endereco);
           propriedade.preco = imovelDisponivel[identificador].preco;
-
           imovelDisponivel[identificador].codigo = -1;
-          strcpy(imovelDisponivel[identificador].endereco, ' ');
+          strcpy(imovelDisponivel[identificador].endereco, "");
           imovelDisponivel[identificador].preco = -1.00;
           printf("alugando imóvel %d, localizado em %s, no valor de %.2f\n", propriedade.codigo, propriedade.endereco, propriedade.preco);
-
           sleep(get_random_number());
-
-          int i;
-          for(i = 0; i < 10; i++)
+          for(int i = 0; i < 10; i++)
           {
               if(imovelEntregue[i].codigo == -1)
               {
@@ -117,13 +122,10 @@ void return_property() {
           propriedade.codigo = imovelDisponivel[l].codigo;
           strcpy(propriedade.endereco, imovelDisponivel[l].endereco);
           propriedade.preco = imovelDisponivel[l].preco;
-
           imovelEntregue[l].codigo = propriedade.codigo;
           strcpy(imovelEntregue[l].endereco, propriedade.endereco);
           imovelEntregue[l].preco = propriedade.preco;
-
-          int y;
-          for(y = 0; y < 10; y++)
+          for(int y = 0; y < 10; y++)
           {
               if(imovelDisponivel[y].codigo == -1)
               {
@@ -148,23 +150,15 @@ void *tenant_thread_function(void *arg) {
   rent_property();
 }
 
-
 int main() {
-    int k;
-    for(k=0; k<10; k++)
-    {
-        imovelEntregue[k].codigo = -1;
-        strcpy(imovelEntregue[k].endereco, ' ');
-        imovelEntregue[k].preco = -1.00;
-    }
-
-    pthread_mutex_init(&mutex, NULL);
-
     pthread_t tenant_threads[NUM_TENANT_THREADS];
     pthread_t corretor_threads[NUM_BROKER_THREADS];
-    long t;
-    for(t=0; t<NUM_TENANT_THREADS; t++){
-        printf("In main: creating tenant thread %ld\n", t);
+
+    instantiate_delivered_properties();
+    CadastraImoveisDisponiveis();
+    pthread_mutex_init(&mutex, NULL);
+    for(int t=0; t<NUM_TENANT_THREADS; t++){
+        printf("In main: creating tenant thread %d\n", t);
         int res_thread;
         res_thread = pthread_create(&tenant_threads[t], NULL, tenant_thread_function, NULL);
         if (res_thread){
@@ -172,9 +166,9 @@ int main() {
             exit(-1);
         }
     }
-    for(t=0; t<NUM_BROKER_THREADS; t++)
+    for(int t=0; t<NUM_BROKER_THREADS; t++)
     {
-        printf("In main: creating broker thread %ld\n", t);
+        printf("In main: creating broker thread %d\n", t);
         int cor_thread;
         cor_thread = pthread_create(&corretor_threads[t], NULL, broker_thread_function, NULL);
         if(cor_thread)
@@ -183,11 +177,11 @@ int main() {
             exit(-1);
         }
     }
-    for(t=0; t<NUM_TENANT_THREADS; t++){
+    for(int t=0; t<NUM_TENANT_THREADS; t++){
         pthread_join(tenant_threads[t], NULL);
     }
 
-    for(t=0; t<NUM_BROKER_THREADS; t++){
+    for(int t=0; t<NUM_BROKER_THREADS; t++){
         pthread_join(corretor_threads[t], NULL);
     }
     pthread_mutex_destroy(&mutex);
