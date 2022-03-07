@@ -21,7 +21,8 @@ Imovel imovelEntregue[20];
 
 int contador = 10;
 
-pthread_mutex_t mutex;
+pthread_mutex_t mutexImovelDisponivel;
+pthread_mutex_t mutexImovelEntregue;
 
 void CadastraImoveisDisponiveis()
 {
@@ -108,8 +109,8 @@ void rent_property()
   while(1)
   {
       int identificador = get_random_number(20);
-      pthread_mutex_lock(&mutex);
-      if(imovelDisponivel[identificador].codigo != -1 && imovelDisponivel[identificador].codigo != 0)
+      pthread_mutex_lock(&mutexImovelDisponivel);
+      if(imovelDisponivel[identificador].codigo != -1)
       {
           Imovel propriedade;
           propriedade.codigo = imovelDisponivel[identificador].codigo;
@@ -123,9 +124,9 @@ void rent_property()
           strcpy(imovelDisponivel[identificador].bairro, "");
           printf("alugando imovel %d, localizado no bairro %s em %s, no valor de %.2f\n", propriedade.codigo, propriedade.bairro, propriedade.endereco, propriedade.preco);
 
-          pthread_mutex_unlock(&mutex);
+          pthread_mutex_unlock(&mutexImovelDisponivel);
           sleep(get_random_number(10));
-          pthread_mutex_lock(&mutex);
+          pthread_mutex_lock(&mutexImovelEntregue);
 
           int i;
           for(i = 0; i < 20; i++)
@@ -139,10 +140,10 @@ void rent_property()
                   break;
               }
           }
-          pthread_mutex_unlock(&mutex);
+          pthread_mutex_unlock(&mutexImovelEntregue);
           break;
       }
-      pthread_mutex_unlock(&mutex);
+      pthread_mutex_unlock(&mutexImovelDisponivel);
   }
 }
 
@@ -150,8 +151,8 @@ void return_property() {
   int l = 0;
   while(1)
   {
-      pthread_mutex_lock(&mutex);
-      if(imovelEntregue[l].codigo != -1 && imovelEntregue[l].codigo != 0)
+      pthread_mutex_lock(&mutexImovelEntregue);
+      if(imovelEntregue[l].codigo != -1)
       {
           Imovel propriedade;
 
@@ -164,8 +165,10 @@ void return_property() {
           strcpy(imovelEntregue[l].endereco, "");
           imovelEntregue[l].preco = -1.00;
           strcpy(imovelEntregue[l].bairro, "");
+          pthread_mutex_unlock(&mutexImovelEntregue);
 
           int y;
+          pthread_mutex_lock(&mutexImovelDisponivel);
           for(y = 0; y < 20; y++)
           {
               if(imovelDisponivel[y].codigo == -1)
@@ -177,10 +180,10 @@ void return_property() {
                   break;
               }
           }
-          pthread_mutex_unlock(&mutex);
+          pthread_mutex_unlock(&mutexImovelDisponivel);
           break;
       }
-      pthread_mutex_unlock(&mutex);
+      pthread_mutex_unlock(&mutexImovelEntregue);
       l++;
       if(l > 19)
       {
@@ -192,7 +195,7 @@ void return_property() {
 void add_property()
 {
     int k;
-    pthread_mutex_lock(&mutex);
+    pthread_mutex_lock(&mutexImovelDisponivel);
     for(k = 0; k < 20; k++)
     {
         if(imovelDisponivel[k].codigo == -1)
@@ -206,7 +209,7 @@ void add_property()
             break;
         }
     }
-    pthread_mutex_unlock(&mutex);
+    pthread_mutex_unlock(&mutexImovelDisponivel);
 }
 
 void remove_property()
@@ -215,7 +218,7 @@ void remove_property()
     while(1)
     {
         idRemover = get_random_number(20);
-        pthread_mutex_lock(&mutex);
+        pthread_mutex_lock(&mutexImovelDisponivel);
         if(imovelDisponivel[idRemover].codigo != -1 && imovelDisponivel[idRemover].codigo != 0)
         {
             printf("removendo o imovel %d, localizado no bairro %s em %s, no valor de %.2f da base de dados\n", imovelDisponivel[idRemover].codigo, imovelDisponivel[idRemover].bairro, imovelDisponivel[idRemover].endereco, imovelDisponivel[idRemover].preco);
@@ -223,10 +226,10 @@ void remove_property()
             strcpy(imovelDisponivel[idRemover].endereco, " ");
             imovelDisponivel[idRemover].preco = -1.00;
             strcpy(imovelDisponivel[idRemover].bairro, " ");
-            pthread_mutex_unlock(&mutex);
+            pthread_mutex_unlock(&mutexImovelDisponivel);
             break;
         }
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_unlock(&mutexImovelDisponivel);
     }
 }
 
@@ -260,7 +263,8 @@ void main()
 
     instantiate_delivered_properties();
     CadastraImoveisDisponiveis();
-    pthread_mutex_init(&mutex, NULL);
+    pthread_mutex_init(&mutexImovelDisponivel, NULL);
+    pthread_mutex_init(&mutexImovelEntregue, NULL);
     for(int t=0; t<NUM_TENANT_THREADS; t++){
         printf("In main: creating tenant thread %ld\n", t);
         int res_thread;
@@ -289,5 +293,6 @@ void main()
     for(int t=0; t<NUM_BROKER_THREADS; t++){
         pthread_join(corretor_threads[t], NULL);
     }
-    pthread_mutex_destroy(&mutex);
+    pthread_mutex_destroy(&mutexImovelDisponivel);
+    pthread_mutex_destroy(&mutexImovelEntregue);
 }
