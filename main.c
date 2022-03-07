@@ -164,7 +164,7 @@ void return_property(int broker) {
               strcpy(imovelDisponivel[y].endereco, propriedade.endereco);
               strcpy(imovelDisponivel[y].bairro, propriedade.bairro);
               imovelDisponivel[y].preco = propriedade.preco;
-              printf("Corretor %d devolvendo imóvel %d, localizado em %s, no valor de %.2f\n", broker, propriedade.codigo, propriedade.endereco, propriedade.preco);
+              printf("Corretor %d retornando à lista de disponíveis o imóvel %d, localizado em %s, no valor de %.2f\n", broker, propriedade.codigo, propriedade.endereco, propriedade.preco);
               break;
           }
       }
@@ -173,7 +173,7 @@ void return_property(int broker) {
   }
 }
 
-void add_property()
+void add_property(int broker)
 {
     int k;
     pthread_mutex_lock(&mutexImovelDisponivel);
@@ -186,14 +186,14 @@ void add_property()
             strcpy(imovelDisponivel[k].endereco, "Residencial Novo Campeche, 2022");
             imovelDisponivel[k].preco = 1500.00;
             strcpy(imovelDisponivel[k].bairro, "Novo Campeche");
-            printf("adicionando imovel %d, localizado no bairro %s em %s, no valor de %.2f\n", imovelDisponivel[k].codigo, imovelDisponivel[k].bairro, imovelDisponivel[k].endereco, imovelDisponivel[k].preco);
+            printf("Corretor %d adicionou o imovel %d, localizado no bairro %s em %s, no valor de %.2f\n", broker, imovelDisponivel[k].codigo, imovelDisponivel[k].bairro, imovelDisponivel[k].endereco, imovelDisponivel[k].preco);
             break;
         }
     }
     pthread_mutex_unlock(&mutexImovelDisponivel);
 }
 
-void remove_property()
+void remove_property(int broker)
 {
     int idRemover;
     while(1)
@@ -202,7 +202,7 @@ void remove_property()
         pthread_mutex_lock(&mutexImovelDisponivel);
         if(imovelDisponivel[idRemover].codigo != -1 && imovelDisponivel[idRemover].codigo != 0)
         {
-            printf("removendo o imovel %d, localizado no bairro %s em %s, no valor de %.2f da base de dados\n", imovelDisponivel[idRemover].codigo, imovelDisponivel[idRemover].bairro, imovelDisponivel[idRemover].endereco, imovelDisponivel[idRemover].preco);
+            printf("Corretor %d removeu o imovel %d, localizado no bairro %s em %s, no valor de %.2f da base de dados\n", broker, imovelDisponivel[idRemover].codigo, imovelDisponivel[idRemover].bairro, imovelDisponivel[idRemover].endereco, imovelDisponivel[idRemover].preco);
             imovelDisponivel[idRemover].codigo = -1;
             strcpy(imovelDisponivel[idRemover].endereco, " ");
             imovelDisponivel[idRemover].preco = -1.00;
@@ -225,10 +225,10 @@ void *broker_thread_function(void *arg)
         return_property(copy);
         break;
     case 1:
-        add_property();
+        add_property(copy);
         break;
     case 2:
-        remove_property();
+        remove_property(copy);
         break;
     }
 }
