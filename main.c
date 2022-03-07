@@ -275,6 +275,7 @@ void main()
         printf("In main: creating broker thread %ld\n", t);
         int cor_thread;
         cor_thread = pthread_create(&corretor_threads[t], NULL, broker_thread_function, NULL);
+        sleep(get_random_number(10));
         if(cor_thread)
         {
             printf("ERROR; return code from pthread_create() is %d\n", cor_thread);
