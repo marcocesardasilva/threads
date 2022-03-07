@@ -78,79 +78,79 @@ int get_random_number(int max_random_number) {
   return random_number;
 }
 
-int rent_property(int tenant) {
-    for(int y = 0; y < 100; y++) {
-      int index = get_random_number(10);
-      pthread_mutex_lock(&mutexImovelDisponivel);
-      if(imovelDisponivel[index].codigo != -1) {
-        Imovel propriedade;
-        propriedade.codigo = imovelDisponivel[index].codigo;
-        strcpy(propriedade.endereco, imovelDisponivel[index].endereco);
-        propriedade.preco = imovelDisponivel[index].preco;
-        imovelDisponivel[index].codigo = -1;
-        strcpy(imovelDisponivel[index].endereco, "");
-        imovelDisponivel[index].preco = -1.00;
-        pthread_mutex_unlock(&mutexImovelDisponivel);
-        printf("Inquilino %d alugando imóvel %d, localizado em %s, no valor de %.2f\n", tenant, propriedade.codigo, propriedade.endereco, propriedade.preco);
-        int delivered_list_index;
-        pthread_mutex_lock(&mutexImovelEntregue);
-        for(delivered_list_index = 0; delivered_list_index < 10; delivered_list_index++)
+void rent_property(int tenant) {
+  while(1) {
+    int index = get_random_number(10);
+    pthread_mutex_lock(&mutexImovelDisponivel);
+    if(imovelDisponivel[index].codigo != -1) {
+      Imovel propriedade;
+      propriedade.codigo = imovelDisponivel[index].codigo;
+      strcpy(propriedade.endereco, imovelDisponivel[index].endereco);
+      propriedade.preco = imovelDisponivel[index].preco;
+      imovelDisponivel[index].codigo = -1;
+      strcpy(imovelDisponivel[index].endereco, "");
+      imovelDisponivel[index].preco = -1.00;
+      printf("Inquilino %d alugando imóvel %d, localizado em %s, no valor de %.2f\n", tenant, propriedade.codigo, propriedade.endereco, propriedade.preco);
+      sleep(get_random_number(5));
+      printf("Inquilino %d devolvendo imóvel %d, localizado em %s, no valor de %.2f\n", tenant, propriedade.codigo, propriedade.endereco, propriedade.preco);
+      pthread_mutex_lock(&mutexImovelEntregue);
+      int delivered_list_index;
+      for(delivered_list_index = 0; delivered_list_index < 10; delivered_list_index++)
+      {
+        if(imovelEntregue[delivered_list_index].codigo == -1)
         {
-          if(imovelEntregue[delivered_list_index].codigo == -1)
-          {
-              imovelEntregue[delivered_list_index].codigo = propriedade.codigo;
-              strcpy(imovelEntregue[delivered_list_index].endereco, propriedade.endereco);
-              imovelEntregue[delivered_list_index].preco = propriedade.preco;
-              break;
-          }
+            imovelEntregue[delivered_list_index].codigo = propriedade.codigo;
+            strcpy(imovelEntregue[delivered_list_index].endereco, propriedade.endereco);
+            imovelEntregue[delivered_list_index].preco = propriedade.preco;
+            break;
         }
-        pthread_mutex_unlock(&mutexImovelEntregue);
-        return delivered_list_index;
-      } else {
-        pthread_mutex_unlock(&mutexImovelDisponivel);
-        return -1;
       }
+      pthread_mutex_unlock(&mutexImovelEntregue);
     }
+    pthread_mutex_unlock(&mutexImovelDisponivel);
+  }
 }
 
-void return_property(int index, int tenant) {
-  Imovel propriedade;
-  pthread_mutex_lock(&mutexImovelEntregue);
-  propriedade.codigo = imovelEntregue[index].codigo;
-  strcpy(propriedade.endereco, imovelEntregue[index].endereco);
-  propriedade.preco = imovelEntregue[index].preco;
-  imovelEntregue[index].codigo = -1;
-  strcpy(imovelEntregue[index].endereco, "");
-  imovelEntregue[index].preco = -1.00;
-  pthread_mutex_unlock(&mutexImovelEntregue);
-  pthread_mutex_lock(&mutexImovelDisponivel);
-  for(int y = 0; y < 10; y++)
-  {
-      if(imovelDisponivel[y].codigo == -1)
+void return_property(int broker) {
+  while(1) {
+    int index = get_random_number(10);
+    if (imovelEntregue[index].codigo == 1) {
+      Imovel propriedade;
+      pthread_mutex_lock(&mutexImovelEntregue);
+      propriedade.codigo = imovelEntregue[index].codigo;
+      strcpy(propriedade.endereco, imovelEntregue[index].endereco);
+      propriedade.preco = imovelEntregue[index].preco;
+      imovelEntregue[index].codigo = -1;
+      strcpy(imovelEntregue[index].endereco, "");
+      imovelEntregue[index].preco = -1.00;
+      pthread_mutex_unlock(&mutexImovelEntregue);
+      pthread_mutex_lock(&mutexImovelDisponivel);
+      for(int y = 0; y < 10; y++)
       {
-          imovelDisponivel[y].codigo = propriedade.codigo;
-          strcpy(imovelDisponivel[y].endereco, propriedade.endereco);
-          imovelDisponivel[y].preco = propriedade.preco;
-          printf("Inquilino %d devolvendo imóvel %d, localizado em %s, no valor de %.2f\n", tenant, propriedade.codigo, propriedade.endereco, propriedade.preco);
-          break;
+          if(imovelDisponivel[y].codigo == -1)
+          {
+              imovelDisponivel[y].codigo = propriedade.codigo;
+              strcpy(imovelDisponivel[y].endereco, propriedade.endereco);
+              imovelDisponivel[y].preco = propriedade.preco;
+              printf("Corretor %d devolvendo imóvel %d, localizado em %s, no valor de %.2f\n", broker, propriedade.codigo, propriedade.endereco, propriedade.preco);
+              break;
+          }
       }
+      pthread_mutex_unlock(&mutexImovelDisponivel);
+    }
   }
-  pthread_mutex_unlock(&mutexImovelDisponivel);
 }
 
 void *broker_thread_function(void *arg) {
+  int *tenant = (int *)arg;
+  int copy = *tenant;
+  return_property(copy);
 }
 
 void *tenant_thread_function(void *arg) {
   int *tenant = (int *)arg;
   int copy = *tenant;
-  for (;;) {
-    int index = rent_property(copy);
-    if (index != -1) {
-      sleep(get_random_number(5));
-      return_property(index, copy);
-    }
-  }
+  rent_property(copy);
 }
 
 int main() {
@@ -177,7 +177,7 @@ int main() {
   {
       printf("In main: creating broker thread %d\n", t);
       int cor_thread;
-      cor_thread = pthread_create(&corretor_threads[t], NULL, broker_thread_function, NULL);
+      cor_thread = pthread_create(&corretor_threads[t], NULL, broker_thread_function, &t);
       if(cor_thread)
       {
           printf("ERROR; return code from pthread_create() is %d\n", cor_thread);
